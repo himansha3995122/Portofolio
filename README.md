@@ -98,7 +98,24 @@ docker compose up -d --build         # http://localhost:4000
 No Docker needed. cPanel runs the app with Phusion Passenger behind its
 own web server, and AutoSSL provides HTTPS.
 
-**Package it** (on your PC):
+**Option 1: deploy from GitHub (recommended)**
+
+`.cpanel.yml` makes cPanel run `scripts/cpanel-deploy.sh` on deploy. It
+builds the client on the server and copies the code into
+`~/portfolio`, leaving `server/data`, `server/uploads`, and
+`server/.env` alone.
+
+1. **Git Version Control → Create:** clone the GitHub repo (e.g. into
+   `~/repositories/Portofolio`).
+2. **Pull or Deploy → Deploy HEAD Commit.** This creates `~/portfolio`.
+3. **Setup Node.js App:** create the app as described in step 2 below
+   (application root `portfolio/server`, startup file `app.cjs`, env
+   vars), then **Run NPM Install** and **Restart**.
+4. For every later update: `git push` from your PC, then in cPanel click
+   **Update from Remote**, then **Deploy HEAD Commit**. Only click **Run
+   NPM Install** if `server/package.json` changed.
+
+**Option 2: upload a zip.** Package it on your PC:
 
 ```
 powershell -File scripts/package-cpanel.ps1

@@ -1,0 +1,6 @@
+---
+# Run by cPanel's Git Version Control when you click "Deploy HEAD Commit".
+# All the logic lives in the script so it can be read and tested normally.
+deployment:
+  tasks:
+    - /bin/bash scripts/cpanel-deploy.sh
