@@ -18,6 +18,21 @@ const app = express();
 app.set("trust proxy", 1);
 app.disable("x-powered-by");
 
+// Send plain-HTTP visitors to HTTPS in production so the admin password is
+// never posted unencrypted. Only acts when the proxy in front (cPanel's
+// LiteSpeed, Caddy, ...) explicitly reports "http" — if that header isn't
+// sent, this does nothing rather than risk a redirect loop.
+app.use((req, res, next) => {
+  const proto = (req.get("x-forwarded-proto") || "").split(",")[0].trim();
+  if (process.env.NODE_ENV === "production" && proto === "http") {
+    return res.redirect(301, `https://${req.get("host")}${req.originalUrl}`);
+  }
+  if (proto === "https") {
+    res.set("Strict-Transport-Security", "max-age=31536000");
+  }
+  next();
+});
+
 // CHANGE ME: in local dev this allows the Vite dev server (a different
 // port) to call this API. In production, Express serves the built
 // client itself (see below) so requests are same-origin and CORS
