@@ -10,11 +10,37 @@ services:
       NODE_ENV: production
       PORT: 4000
     ports:
-      - "${HOST_PORT:-4000}:4000"
+      # Bound to localhost only: reachable at http://localhost:4000 on this
+      # machine, but not from the internet. Public traffic goes through Caddy.
+      - "127.0.0.1:${HOST_PORT:-4000}:4000"
     volumes:
       - portfolio-data:/app/server/data
       - portfolio-uploads:/app/server/uploads
 
+  # HTTPS reverse proxy for the real server. Only started with
+  # `docker compose --profile prod up -d`. Needs DOMAIN in the root .env.
+  caddy:
+    image: caddy:2-alpine
+    container_name: portfolio-caddy
+    profiles: ["prod"]
+    restart: unless-stopped
+    depends_on:
+      - portfolio
+    environment:
+      DOMAIN: ${DOMAIN:-}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certificates live here — keep this volume so renewals don't hit
+      # Let's Encrypt rate limits on every redeploy.
+      - caddy-data:/data
+      - caddy-config:/config
+
 volumes:
   portfolio-data:
   portfolio-uploads:
+  caddy-data:
+  caddy-config:

@@ -93,11 +93,100 @@ docker compose up -d --build         # http://localhost:4000
 - On first start, the volume is seeded from the `server/data/db.json` in
   the repo. After that, the volume copy is the source of truth.
 
-On a host that builds straight from the `Dockerfile` (Render, Railway,
-Fly.io, ...), set `JWT_SECRET` and `ADMIN_PASSWORD` as env vars there. Also
-attach a persistent disk/volume at `/app/server/data` **and**
-`/app/server/uploads`. Put HTTPS in front: most hosts do this for you. On a VPS, use a
-reverse proxy like Caddy or nginx pointing at port 4000.
+## 5b-cPanel. Deploy to cPanel hosting (Setup Node.js App)
+
+No Docker needed. cPanel runs the app with Phusion Passenger behind its
+own web server, and AutoSSL provides HTTPS.
+
+**Package it** (on your PC):
+
+```
+powershell -File scripts/package-cpanel.ps1
+```
+
+This builds the client and creates `deploy/portfolio-cpanel.zip`. The zip
+never includes `server/data/db.json`, `server/uploads`, or `.env`, so
+re-uploading it can't overwrite your live content, images, or secrets.
+
+**First deploy**
+
+1. **File Manager:** create a folder `portfolio` in your home directory
+   (e.g. `/home/<user>/portfolio`, *not* inside `public_html`). Upload
+   the zip there and **Extract** it. You should now have
+   `portfolio/server` and `portfolio/client/dist`.
+2. **Setup Node.js App → Create Application:**
+   - Node.js version: the highest available (18 or newer is required)
+   - Application mode: **Production**
+   - Application root: `portfolio/server`
+   - Application URL: your domain
+   - Application startup file: `app.cjs`
+   - Environment variables: add `JWT_SECRET` (long random string) and
+     `ADMIN_PASSWORD`
+3. Click **Create**, then **Run NPM Install**, then **Restart**.
+4. **SSL/TLS Status:** make sure your domain has an AutoSSL certificate
+   (run AutoSSL if it doesn't), so the site and the admin login use HTTPS.
+5. Open `https://yourdomain.com` and `https://yourdomain.com/admin`.
+
+**Deploying updates:** run the package script again, upload and extract
+the new zip over `portfolio/` (overwrite existing files), then click
+**Restart** in Setup Node.js App. Only click **Run NPM Install** if
+`server/package.json` changed.
+
+**Your content** lives in `portfolio/server/data/db.json` and
+`portfolio/server/uploads/` on the hosting account. Back those up now and
+then (download from File Manager, or use cPanel's Backup tool).
+
+**If it doesn't start:** check `portfolio/server/stderr.log` (if your host
+writes one) or the error shown in the browser. The usual causes are a
+Node version below 18 or missing `JWT_SECRET` / `ADMIN_PASSWORD`, since the
+server refuses to start in production without them.
+
+## 5c. Deploy to your own server (VPS)
+
+The `prod` compose profile adds [Caddy](https://caddyserver.com) in front of
+the app. It gets and renews a free Let's Encrypt HTTPS certificate on its
+own. The app's port 4000 is bound to localhost only, so all public traffic
+goes through Caddy.
+
+**One-time setup**
+
+1. **DNS:** at your domain registrar, add an `A` record for your domain
+   (and `www`, if you want it) pointing at the server's public IP. Wait
+   until `ping yourdomain.com` shows that IP.
+2. **Firewall:** allow ports 22 (SSH), 80, and 443. On Ubuntu:
+   `sudo ufw allow OpenSSH && sudo ufw allow 80 && sudo ufw allow 443 && sudo ufw enable`
+3. **Install Docker** on the server:
+   `curl -fsSL https://get.docker.com | sudo sh && sudo usermod -aG docker $USER`
+   (log out and back in afterwards).
+4. **Get the code onto the server:** `git clone <your-repo-url> portfolio && cd portfolio`
+5. **Create the two env files.** Neither is committed, so create them on
+   the server:
+   ```
+   cp server/.env.example server/.env   # set JWT_SECRET and ADMIN_PASSWORD
+   cp .env.example .env                 # set DOMAIN=yourdomain.com
+   ```
+6. **Start it:**
+   ```
+   docker compose --profile prod up -d --build
+   ```
+   Open `https://yourdomain.com` and `https://yourdomain.com/admin`. The
+   first request can take a few seconds while the certificate is issued.
+   If it fails, check `docker compose logs caddy`. The cause is almost
+   always DNS not pointing at the server yet, or ports 80/443 being blocked.
+
+**Deploying updates**
+
+```
+git pull
+docker compose --profile prod up -d --build
+```
+
+Your content, uploads, and certificates are in Docker volumes, so they're
+kept across updates. Don't run `docker compose down -v`: `-v` deletes
+the volumes.
+
+Both containers use `restart: unless-stopped`, so they come back up after
+a server reboot on their own.
 
 ## 6. Deploy to your own domain
 

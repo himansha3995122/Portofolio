@@ -1,0 +1,21 @@
+# DOMAIN comes from the root .env, e.g. DOMAIN=himansha.dev
+# For both apex and www: DOMAIN=himansha.dev, www.himansha.dev
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Slightly above the server's 5MB upload limit so multer, not Caddy,
+	# returns the error.
+	request_body {
+		max_size 6MB
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	reverse_proxy portfolio:4000
+}
