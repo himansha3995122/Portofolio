@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    color-scheme: light;
+    @apply bg-bg;
+  }
+  body {
+    @apply font-body;
+  }
+}
+@layer utilities {
+  @keyframes spin-slow {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes spin-slow-rev {
+    to { transform: rotate(-360deg); }
+  }
+  .animate-spin-slow {
+    animation: spin-slow 7s linear infinite;
+    transform-origin: 32px 32px;
+  }
+  .animate-spin-slow-rev {
+    animation: spin-slow-rev 5s linear infinite;
+    transform-origin: 32px 32px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .animate-spin-slow,
+    .animate-spin-slow-rev {
+      animation: none;
+    }
+  }
+}

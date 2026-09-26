@@ -1,0 +1,20 @@
+services:
+  portfolio:
+    build: .
+    image: portfolio:latest
+    container_name: portfolio
+    restart: unless-stopped
+    # JWT_SECRET and ADMIN_PASSWORD come from here (copy server/.env.example).
+    env_file: ./server/.env
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+    ports:
+      - "${HOST_PORT:-4000}:4000"
+    volumes:
+      - portfolio-data:/app/server/data
+      - portfolio-uploads:/app/server/uploads
+
+volumes:
+  portfolio-data:
+  portfolio-uploads:

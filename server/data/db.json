@@ -1,0 +1,22 @@
+{
+  "profile": {
+    "name": "Himansha",
+    "title": "Software Engineer",
+    "bio": "I build things with code, chase clean solutions on LeetCode, take photos on the side, and always have a book going. This site is a running log of all of it.",
+    "chips": [
+      "Software Engineer",
+      "Sydney"
+    ],
+    "photoUrl": ""
+  },
+  "navItems": [
+    { "id": "swe", "label": "Software Engineering", "order": 0 },
+    { "id": "visuals", "label": "Visuals", "order": 1 },
+    { "id": "books", "label": "Books", "order": 2 },
+    { "id": "leetcode", "label": "LeetCode", "order": 3 }
+  ],
+  "visuals": [],
+  "projects": [],
+  "books": [],
+  "leetcode": []
+}

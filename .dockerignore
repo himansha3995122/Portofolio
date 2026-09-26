@@ -1,0 +1,16 @@
+**/node_modules
+**/.env
+**/.env.*
+!**/.env.example
+client/dist
+server/uploads/*
+!server/uploads/.gitkeep
+.git
+.gitignore
+.vscode
+.claude
+Dockerfile
+docker-compose.yml
+.dockerignore
+README.md
+**/*.log
