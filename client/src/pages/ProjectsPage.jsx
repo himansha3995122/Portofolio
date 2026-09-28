@@ -23,6 +23,13 @@ export default function ProjectsPage() {
               key={item.id}
               className="border border-line dark:border-line-dark rounded-2xl p-5 bg-surface dark:bg-surface-dark"
             >
+              {item.imageUrl && (
+                <img
+                  src={item.imageUrl}
+                  alt={item.title}
+                  className="w-full max-h-72 object-cover rounded-xl mb-4 border border-line dark:border-line-dark"
+                />
+              )}
               <h3 className="text-xl mb-2">{item.title}</h3>
               {item.description && (
                 <p className="text-dim dark:text-dim-dark leading-relaxed m-0">{item.description}</p>

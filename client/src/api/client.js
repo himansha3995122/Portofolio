@@ -59,7 +59,14 @@ export const api = {
     }
     return request(`/api/${key}`, { method: "POST", body: data, auth: true });
   },
-  patchCollectionItem: (key, id, patch) =>
-    request(`/api/${key}/${id}`, { method: "PATCH", body: patch, auth: true }),
+  patchCollectionItem: (key, id, patch, file) => {
+    if (file) {
+      const form = new FormData();
+      Object.entries(patch).forEach(([k, v]) => form.append(k, v));
+      form.append("image", file);
+      return request(`/api/${key}/${id}`, { method: "PATCH", body: form, isForm: true, auth: true });
+    }
+    return request(`/api/${key}/${id}`, { method: "PATCH", body: patch, auth: true });
+  },
   deleteCollectionItem: (key, id) => request(`/api/${key}/${id}`, { method: "DELETE", auth: true }),
 };

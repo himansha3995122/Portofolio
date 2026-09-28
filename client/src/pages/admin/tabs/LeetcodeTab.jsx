@@ -2,28 +2,48 @@ import { useState } from "react";
 import { useData } from "../../../context/DataContext";
 import { api } from "../../../api/client";
 import IconButton from "../../../components/IconButton";
-import { inputClass, textareaClass, btnPrimaryClass } from "./formStyles";
+import { inputClass, textareaClass, btnPrimaryClass, btnClass } from "./formStyles";
+
+const emptyForm = { title: "", difficulty: "Easy", link: "", notes: "" };
 
 export default function LeetcodeTab() {
   const { leetcode, refetch } = useData();
-  const [form, setForm] = useState({ title: "", difficulty: "Easy", link: "", notes: "" });
+  const [editingId, setEditingId] = useState(null);
+  const [form, setForm] = useState(emptyForm);
   const [screenshot, setScreenshot] = useState(null);
   const items = [...leetcode].sort((a, b) => a.order - b.order);
 
-  async function handleAdd() {
-    if (!form.title.trim()) return;
-    await api.addCollectionItem(
-      "leetcode",
-      {
-        title: form.title.trim(),
-        difficulty: form.difficulty,
-        link: form.link.trim(),
-        notes: form.notes.trim(),
-      },
-      screenshot
-    );
-    setForm({ title: "", difficulty: "Easy", link: "", notes: "" });
+  function startEdit(item) {
+    setEditingId(item.id);
+    setForm({
+      title: item.title || "",
+      difficulty: item.difficulty || "Easy",
+      link: item.link || "",
+      notes: item.notes || "",
+    });
     setScreenshot(null);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setForm(emptyForm);
+    setScreenshot(null);
+  }
+
+  async function handleSubmit() {
+    if (!form.title.trim()) return;
+    const body = {
+      title: form.title.trim(),
+      difficulty: form.difficulty,
+      link: form.link.trim(),
+      notes: form.notes.trim(),
+    };
+    if (editingId) {
+      await api.patchCollectionItem("leetcode", editingId, body, screenshot);
+    } else {
+      await api.addCollectionItem("leetcode", body, screenshot);
+    }
+    cancelEdit();
     refetch("leetcode");
   }
 
@@ -36,6 +56,7 @@ export default function LeetcodeTab() {
   }
 
   async function handleRemove(id) {
+    if (editingId === id) cancelEdit();
     await api.deleteCollectionItem("leetcode", id);
     refetch("leetcode");
   }
@@ -57,7 +78,7 @@ export default function LeetcodeTab() {
           onChange={(e) => setForm({ ...form, notes: e.target.value })}
         />
         <label className="text-xs text-dim dark:text-dim-dark">
-          Screenshot (optional)
+          {editingId ? "Replace screenshot (optional)" : "Screenshot (optional)"}
           <input
             type="file"
             accept="image/*"
@@ -65,9 +86,16 @@ export default function LeetcodeTab() {
             onChange={(e) => setScreenshot(e.target.files?.[0] || null)}
           />
         </label>
-        <button className={`${btnPrimaryClass} self-start`} onClick={handleAdd}>
-          Add problem
-        </button>
+        <div className="flex gap-2">
+          <button className={`${btnPrimaryClass} self-start`} onClick={handleSubmit}>
+            {editingId ? "Save changes" : "Add problem"}
+          </button>
+          {editingId && (
+            <button className={`${btnClass} self-start`} onClick={cancelEdit}>
+              Cancel
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col gap-2.5">
@@ -93,6 +121,7 @@ export default function LeetcodeTab() {
                 disabled={idx === items.length - 1}
                 onClick={() => handleSwap(item, items[idx + 1])}
               />
+              <IconButton label="✎" title="Edit" onClick={() => startEdit(item)} />
               <IconButton label="✕" title="Remove" onClick={() => handleRemove(item.id)} />
             </div>
           </div>

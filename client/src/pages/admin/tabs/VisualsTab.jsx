@@ -3,17 +3,41 @@ import { useData } from "../../../context/DataContext";
 import { api } from "../../../api/client";
 import IconButton from "../../../components/IconButton";
 import { getYouTubeEmbedUrl, getYouTubeThumbnail } from "../../../utils/youtube";
-import { inputClass, btnPrimaryClass } from "./formStyles";
+import { inputClass, btnPrimaryClass, btnClass } from "./formStyles";
 
 export default function VisualsTab() {
   const { visuals, refetch } = useData();
+  const [editingId, setEditingId] = useState(null);
   const [mediaType, setMediaType] = useState("photo");
   const [category, setCategory] = useState("Photography");
   const [title, setTitle] = useState("");
   const [caption, setCaption] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
+  const [photo, setPhoto] = useState(null);
   const [note, setNote] = useState("");
   const items = [...visuals].sort((a, b) => a.order - b.order);
+
+  function startEdit(item) {
+    setEditingId(item.id);
+    setMediaType(item.videoUrl ? "video" : "photo");
+    setCategory(item.category || "Photography");
+    setTitle(item.title || "");
+    setCaption(item.caption || "");
+    setVideoUrl(item.videoUrl || "");
+    setPhoto(null);
+    setNote("");
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setMediaType("photo");
+    setCategory("Photography");
+    setTitle("");
+    setCaption("");
+    setVideoUrl("");
+    setPhoto(null);
+    setNote("");
+  }
 
   async function handleFile(e) {
     const file = e.target.files?.[0];
@@ -21,9 +45,7 @@ export default function VisualsTab() {
     setNote("Uploading…");
     try {
       await api.addCollectionItem("visuals", { category, title, caption }, file);
-      setTitle("");
-      setCaption("");
-      e.target.value = "";
+      cancelEdit();
       await refetch("visuals");
       setNote("Added.");
       setTimeout(() => setNote(""), 2000);
@@ -40,12 +62,27 @@ export default function VisualsTab() {
     setNote("Adding…");
     try {
       await api.addCollectionItem("visuals", { category, title, caption, videoUrl: videoUrl.trim() });
-      setTitle("");
-      setCaption("");
-      setVideoUrl("");
+      cancelEdit();
       await refetch("visuals");
       setNote("Added.");
       setTimeout(() => setNote(""), 2000);
+    } catch (err) {
+      setNote(err.message);
+    }
+  }
+
+  async function handleSaveEdit() {
+    if (mediaType === "video" && !getYouTubeEmbedUrl(videoUrl)) {
+      setNote("Enter a valid YouTube URL.");
+      return;
+    }
+    setNote("Saving…");
+    try {
+      const body = { category, title, caption };
+      if (mediaType === "video") body.videoUrl = videoUrl.trim();
+      await api.patchCollectionItem("visuals", editingId, body, mediaType === "photo" ? photo : undefined);
+      cancelEdit();
+      await refetch("visuals");
     } catch (err) {
       setNote(err.message);
     }
@@ -60,6 +97,7 @@ export default function VisualsTab() {
   }
 
   async function handleRemove(id) {
+    if (editingId === id) cancelEdit();
     await api.deleteCollectionItem("visuals", id);
     refetch("visuals");
   }
@@ -92,7 +130,38 @@ export default function VisualsTab() {
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
         />
-        {mediaType === "photo" ? (
+
+        {editingId ? (
+          <div className="flex flex-col gap-2.5">
+            {mediaType === "photo" && (
+              <label className="text-xs text-dim dark:text-dim-dark">
+                Replace image (optional)
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="block mt-1 text-xs"
+                  onChange={(e) => setPhoto(e.target.files?.[0] || null)}
+                />
+              </label>
+            )}
+            {mediaType === "video" && (
+              <input
+                className={inputClass}
+                placeholder="YouTube URL"
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+              />
+            )}
+            <div className="flex gap-2">
+              <button className={`${btnPrimaryClass} self-start`} onClick={handleSaveEdit}>
+                Save changes
+              </button>
+              <button className={`${btnClass} self-start`} onClick={cancelEdit}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : mediaType === "photo" ? (
           <label className={`${btnPrimaryClass} cursor-pointer inline-block`}>
             Upload &amp; add
             <input type="file" accept="image/*" onChange={handleFile} className="hidden" />
@@ -137,6 +206,7 @@ export default function VisualsTab() {
                 disabled={idx === items.length - 1}
                 onClick={() => handleSwap(item, items[idx + 1])}
               />
+              <IconButton label="✎" title="Edit" onClick={() => startEdit(item)} />
               <IconButton label="✕" title="Remove" onClick={() => handleRemove(item.id)} />
             </div>
           </div>

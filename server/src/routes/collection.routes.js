@@ -43,11 +43,13 @@ export function createCollectionRouter(key, { withImage = false } = {}) {
     res.status(201).json(data[key]);
   });
 
-  router.patch("/:id", requireAdmin, async (req, res) => {
+  router.patch("/:id", requireAdmin, ...uploadMiddleware, async (req, res) => {
     const { id } = req.params;
     const body = { ...req.body };
     const tags = splitTags(body.tags);
     if (tags !== undefined) body.tags = tags;
+
+    if (withImage && req.file) body.imageUrl = publicUrlFor(req.file.filename);
 
     const data = await updateData((d) => {
       const item = d[key].find((i) => i.id === id);

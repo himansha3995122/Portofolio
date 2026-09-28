@@ -48,7 +48,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/nav", navRoutes);
 app.use("/api/visuals", createCollectionRouter("visuals", { withImage: true }));
-app.use("/api/projects", createCollectionRouter("projects"));
+app.use("/api/projects", createCollectionRouter("projects", { withImage: true }));
 app.use("/api/books", createCollectionRouter("books", { withImage: true }));
 app.use("/api/leetcode", createCollectionRouter("leetcode", { withImage: true }));
 

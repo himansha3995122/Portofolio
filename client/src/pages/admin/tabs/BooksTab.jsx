@@ -2,29 +2,50 @@ import { useState } from "react";
 import { useData } from "../../../context/DataContext";
 import { api } from "../../../api/client";
 import IconButton from "../../../components/IconButton";
-import { inputClass, textareaClass, btnPrimaryClass } from "./formStyles";
+import { inputClass, textareaClass, btnPrimaryClass, btnClass } from "./formStyles";
+
+const emptyForm = { title: "", author: "", status: "Want to read", rating: "0", notes: "" };
 
 export default function BooksTab() {
   const { books, refetch } = useData();
-  const [form, setForm] = useState({ title: "", author: "", status: "Want to read", rating: "0", notes: "" });
+  const [editingId, setEditingId] = useState(null);
+  const [form, setForm] = useState(emptyForm);
   const [cover, setCover] = useState(null);
   const items = [...books].sort((a, b) => a.order - b.order);
 
-  async function handleAdd() {
-    if (!form.title.trim()) return;
-    await api.addCollectionItem(
-      "books",
-      {
-        title: form.title.trim(),
-        author: form.author.trim(),
-        status: form.status,
-        rating: form.rating,
-        notes: form.notes.trim(),
-      },
-      cover
-    );
-    setForm({ title: "", author: "", status: "Want to read", rating: "0", notes: "" });
+  function startEdit(item) {
+    setEditingId(item.id);
+    setForm({
+      title: item.title || "",
+      author: item.author || "",
+      status: item.status || "Want to read",
+      rating: String(item.rating || "0"),
+      notes: item.notes || "",
+    });
     setCover(null);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setForm(emptyForm);
+    setCover(null);
+  }
+
+  async function handleSubmit() {
+    if (!form.title.trim()) return;
+    const body = {
+      title: form.title.trim(),
+      author: form.author.trim(),
+      status: form.status,
+      rating: form.rating,
+      notes: form.notes.trim(),
+    };
+    if (editingId) {
+      await api.patchCollectionItem("books", editingId, body, cover);
+    } else {
+      await api.addCollectionItem("books", body, cover);
+    }
+    cancelEdit();
     refetch("books");
   }
 
@@ -37,6 +58,7 @@ export default function BooksTab() {
   }
 
   async function handleRemove(id) {
+    if (editingId === id) cancelEdit();
     await api.deleteCollectionItem("books", id);
     refetch("books");
   }
@@ -66,7 +88,7 @@ export default function BooksTab() {
           onChange={(e) => setForm({ ...form, notes: e.target.value })}
         />
         <label className="text-xs text-dim dark:text-dim-dark">
-          Cover image (optional)
+          {editingId ? "Replace cover image (optional)" : "Cover image (optional)"}
           <input
             type="file"
             accept="image/*"
@@ -74,9 +96,16 @@ export default function BooksTab() {
             onChange={(e) => setCover(e.target.files?.[0] || null)}
           />
         </label>
-        <button className={`${btnPrimaryClass} self-start`} onClick={handleAdd}>
-          Add book
-        </button>
+        <div className="flex gap-2">
+          <button className={`${btnPrimaryClass} self-start`} onClick={handleSubmit}>
+            {editingId ? "Save changes" : "Add book"}
+          </button>
+          {editingId && (
+            <button className={`${btnClass} self-start`} onClick={cancelEdit}>
+              Cancel
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col gap-2.5">
@@ -104,6 +133,7 @@ export default function BooksTab() {
                 disabled={idx === items.length - 1}
                 onClick={() => handleSwap(item, items[idx + 1])}
               />
+              <IconButton label="✎" title="Edit" onClick={() => startEdit(item)} />
               <IconButton label="✕" title="Remove" onClick={() => handleRemove(item.id)} />
             </div>
           </div>

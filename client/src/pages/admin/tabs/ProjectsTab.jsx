@@ -2,22 +2,48 @@ import { useState } from "react";
 import { useData } from "../../../context/DataContext";
 import { api } from "../../../api/client";
 import IconButton from "../../../components/IconButton";
-import { inputClass, textareaClass, btnPrimaryClass } from "./formStyles";
+import { inputClass, textareaClass, btnPrimaryClass, btnClass } from "./formStyles";
+
+const emptyForm = { title: "", description: "", link: "", tags: "" };
 
 export default function ProjectsTab() {
   const { projects, refetch } = useData();
-  const [form, setForm] = useState({ title: "", description: "", link: "", tags: "" });
+  const [editingId, setEditingId] = useState(null);
+  const [form, setForm] = useState(emptyForm);
+  const [image, setImage] = useState(null);
   const items = [...projects].sort((a, b) => a.order - b.order);
 
-  async function handleAdd() {
+  function startEdit(item) {
+    setEditingId(item.id);
+    setForm({
+      title: item.title || "",
+      description: item.description || "",
+      link: item.link || "",
+      tags: (item.tags || []).join(", "),
+    });
+    setImage(null);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setForm(emptyForm);
+    setImage(null);
+  }
+
+  async function handleSubmit() {
     if (!form.title.trim()) return;
-    await api.addCollectionItem("projects", {
+    const body = {
       title: form.title.trim(),
       description: form.description.trim(),
       link: form.link.trim(),
       tags: form.tags,
-    });
-    setForm({ title: "", description: "", link: "", tags: "" });
+    };
+    if (editingId) {
+      await api.patchCollectionItem("projects", editingId, body, image);
+    } else {
+      await api.addCollectionItem("projects", body, image);
+    }
+    cancelEdit();
     refetch("projects");
   }
 
@@ -30,6 +56,7 @@ export default function ProjectsTab() {
   }
 
   async function handleRemove(id) {
+    if (editingId === id) cancelEdit();
     await api.deleteCollectionItem("projects", id);
     refetch("projects");
   }
@@ -51,9 +78,25 @@ export default function ProjectsTab() {
           value={form.tags}
           onChange={(e) => setForm({ ...form, tags: e.target.value })}
         />
-        <button className={`${btnPrimaryClass} self-start`} onClick={handleAdd}>
-          Add project
-        </button>
+        <label className="text-xs text-dim dark:text-dim-dark">
+          {editingId ? "Replace image (optional)" : "Image (optional)"}
+          <input
+            type="file"
+            accept="image/*"
+            className="block mt-1 text-xs"
+            onChange={(e) => setImage(e.target.files?.[0] || null)}
+          />
+        </label>
+        <div className="flex gap-2">
+          <button className={`${btnPrimaryClass} self-start`} onClick={handleSubmit}>
+            {editingId ? "Save changes" : "Add project"}
+          </button>
+          {editingId && (
+            <button className={`${btnClass} self-start`} onClick={cancelEdit}>
+              Cancel
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col gap-2.5">
@@ -62,6 +105,11 @@ export default function ProjectsTab() {
             key={item.id}
             className="flex items-center gap-2.5 border border-line dark:border-line-dark rounded-xl p-2.5 bg-surface2 dark:bg-surface2-dark"
           >
+            {item.imageUrl && (
+              <div className="w-10 h-10 rounded-lg overflow-hidden bg-bg dark:bg-bg-dark flex-none">
+                <img src={item.imageUrl} alt="" className="w-full h-full object-cover" />
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium truncate">{item.title}</div>
               <div className="text-[11px] font-mono text-dim dark:text-dim-dark truncate">
@@ -76,6 +124,7 @@ export default function ProjectsTab() {
                 disabled={idx === items.length - 1}
                 onClick={() => handleSwap(item, items[idx + 1])}
               />
+              <IconButton label="✎" title="Edit" onClick={() => startEdit(item)} />
               <IconButton label="✕" title="Remove" onClick={() => handleRemove(item.id)} />
             </div>
           </div>
