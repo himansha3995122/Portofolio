@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { getYouTubeEmbedUrl } from "../utils/youtube";
 
 export default function Lightbox({ items, index, onClose, onPrev, onNext }) {
   useEffect(() => {
@@ -40,7 +41,17 @@ export default function Lightbox({ items, index, onClose, onPrev, onNext }) {
         &rarr;
       </button>
       <figure className="m-0 max-w-[min(880px,92vw)] max-h-[88vh] flex flex-col items-center gap-3">
-        <img src={item.imageUrl} alt={item.title} className="max-w-full max-h-[76vh] rounded-lg object-contain" />
+        {item.videoUrl ? (
+          <iframe
+            src={getYouTubeEmbedUrl(item.videoUrl)}
+            title={item.title || "YouTube video"}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            className="w-[min(880px,92vw)] aspect-video rounded-lg border-0"
+          />
+        ) : (
+          <img src={item.imageUrl} alt={item.title} className="max-w-full max-h-[76vh] rounded-lg object-contain" />
+        )}
         <figcaption className="text-white/90 text-sm text-center max-w-[60ch]">
           <span className="block font-mono text-[11px] tracking-wide uppercase text-emerald-300 mb-1">
             {item.category}

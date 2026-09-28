@@ -30,33 +30,42 @@ export default function BooksPage() {
           {items.map((item) => (
             <div
               key={item.id}
-              className="border border-line dark:border-line-dark rounded-2xl px-5 py-4 bg-surface dark:bg-surface-dark"
+              className="border border-line dark:border-line-dark rounded-2xl px-5 py-4 bg-surface dark:bg-surface-dark flex gap-4"
             >
-              <div className="flex justify-between items-start gap-3 flex-wrap">
-                <div>
-                  <div className="font-display font-semibold text-lg">{item.title}</div>
-                  {item.author && (
-                    <div className="text-dim dark:text-dim-dark text-sm mt-0.5">{item.author}</div>
-                  )}
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <span
-                    className={`font-mono text-[11px] tracking-wide uppercase px-2.5 py-1 rounded-full border border-line dark:border-line-dark ${statusClass(
-                      item.status
-                    )}`}
-                  >
-                    {item.status}
-                  </span>
-                  {parseInt(item.rating, 10) > 0 && (
-                    <span className="text-accent dark:text-accent-dark text-sm tracking-wider">
-                      {stars(item.rating)}
-                    </span>
-                  )}
-                </div>
-              </div>
-              {item.notes && (
-                <p className="mt-2.5 text-dim dark:text-dim-dark text-sm leading-relaxed">{item.notes}</p>
+              {item.imageUrl && (
+                <img
+                  src={item.imageUrl}
+                  alt={item.title}
+                  className="w-16 h-24 object-cover rounded-lg flex-none border border-line dark:border-line-dark"
+                />
               )}
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-start gap-3 flex-wrap">
+                  <div>
+                    <div className="font-display font-semibold text-lg">{item.title}</div>
+                    {item.author && (
+                      <div className="text-dim dark:text-dim-dark text-sm mt-0.5">{item.author}</div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className={`font-mono text-[11px] tracking-wide uppercase px-2.5 py-1 rounded-full border border-line dark:border-line-dark ${statusClass(
+                        item.status
+                      )}`}
+                    >
+                      {item.status}
+                    </span>
+                    {parseInt(item.rating, 10) > 0 && (
+                      <span className="text-accent dark:text-accent-dark text-sm tracking-wider">
+                        {stars(item.rating)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {item.notes && (
+                  <p className="mt-2.5 text-dim dark:text-dim-dark text-sm leading-relaxed">{item.notes}</p>
+                )}
+              </div>
             </div>
           ))}
         </div>

@@ -41,6 +41,13 @@ export default function LeetcodePage() {
               {item.notes && (
                 <p className="w-full m-0 text-dim dark:text-dim-dark text-sm leading-relaxed">{item.notes}</p>
               )}
+              {item.imageUrl && (
+                <img
+                  src={item.imageUrl}
+                  alt={item.title}
+                  className="w-full max-w-xs rounded-lg border border-line dark:border-line-dark"
+                />
+              )}
             </div>
           ))}
         </div>

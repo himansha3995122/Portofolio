@@ -49,8 +49,8 @@ app.use("/api/profile", profileRoutes);
 app.use("/api/nav", navRoutes);
 app.use("/api/visuals", createCollectionRouter("visuals", { withImage: true }));
 app.use("/api/projects", createCollectionRouter("projects"));
-app.use("/api/books", createCollectionRouter("books"));
-app.use("/api/leetcode", createCollectionRouter("leetcode"));
+app.use("/api/books", createCollectionRouter("books", { withImage: true }));
+app.use("/api/leetcode", createCollectionRouter("leetcode", { withImage: true }));
 
 // ============================================================
 // CHANGE ME (nothing to actually change, just know this exists):

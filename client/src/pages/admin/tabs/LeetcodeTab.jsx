@@ -7,17 +7,23 @@ import { inputClass, textareaClass, btnPrimaryClass } from "./formStyles";
 export default function LeetcodeTab() {
   const { leetcode, refetch } = useData();
   const [form, setForm] = useState({ title: "", difficulty: "Easy", link: "", notes: "" });
+  const [screenshot, setScreenshot] = useState(null);
   const items = [...leetcode].sort((a, b) => a.order - b.order);
 
   async function handleAdd() {
     if (!form.title.trim()) return;
-    await api.addCollectionItem("leetcode", {
-      title: form.title.trim(),
-      difficulty: form.difficulty,
-      link: form.link.trim(),
-      notes: form.notes.trim(),
-    });
+    await api.addCollectionItem(
+      "leetcode",
+      {
+        title: form.title.trim(),
+        difficulty: form.difficulty,
+        link: form.link.trim(),
+        notes: form.notes.trim(),
+      },
+      screenshot
+    );
     setForm({ title: "", difficulty: "Easy", link: "", notes: "" });
+    setScreenshot(null);
     refetch("leetcode");
   }
 
@@ -50,6 +56,15 @@ export default function LeetcodeTab() {
           value={form.notes}
           onChange={(e) => setForm({ ...form, notes: e.target.value })}
         />
+        <label className="text-xs text-dim dark:text-dim-dark">
+          Screenshot (optional)
+          <input
+            type="file"
+            accept="image/*"
+            className="block mt-1 text-xs"
+            onChange={(e) => setScreenshot(e.target.files?.[0] || null)}
+          />
+        </label>
         <button className={`${btnPrimaryClass} self-start`} onClick={handleAdd}>
           Add problem
         </button>
@@ -61,6 +76,11 @@ export default function LeetcodeTab() {
             key={item.id}
             className="flex items-center gap-2.5 border border-line dark:border-line-dark rounded-xl p-2.5 bg-surface2 dark:bg-surface2-dark"
           >
+            {item.imageUrl && (
+              <div className="w-10 h-10 rounded-lg overflow-hidden bg-bg dark:bg-bg-dark flex-none">
+                <img src={item.imageUrl} alt="" className="w-full h-full object-cover" />
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium truncate">{item.title}</div>
               <div className="text-[11px] font-mono text-dim dark:text-dim-dark">{item.difficulty}</div>

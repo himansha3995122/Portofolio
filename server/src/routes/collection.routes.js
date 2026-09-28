@@ -33,10 +33,7 @@ export function createCollectionRouter(key, { withImage = false } = {}) {
     const tags = splitTags(body.tags);
     if (tags !== undefined) body.tags = tags;
 
-    if (withImage) {
-      if (req.file) body.imageUrl = publicUrlFor(req.file.filename);
-      else if (!body.imageUrl) return res.status(400).json({ error: "image is required" });
-    }
+    if (withImage && req.file) body.imageUrl = publicUrlFor(req.file.filename);
 
     const id = `${key.slice(0, 3)}${Date.now()}`;
     const data = await updateData((d) => {

@@ -3,6 +3,7 @@ import SectionHeader from "../components/SectionHeader";
 import EmptyState from "../components/EmptyState";
 import Lightbox from "../components/Lightbox";
 import { useData } from "../context/DataContext";
+import { getYouTubeThumbnail } from "../utils/youtube";
 
 export default function VisualsPage() {
   const { visuals } = useData();
@@ -31,10 +32,17 @@ export default function VisualsPage() {
               className="group relative rounded-2xl overflow-hidden border border-line dark:border-line-dark bg-surface2 dark:bg-surface2-dark aspect-[4/5] text-left"
             >
               <img
-                src={item.imageUrl}
+                src={item.videoUrl ? getYouTubeThumbnail(item.videoUrl) : item.imageUrl}
                 alt={item.title}
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
+              {item.videoUrl && (
+                <span className="absolute inset-0 flex items-center justify-center">
+                  <span className="w-12 h-12 rounded-full bg-black/60 backdrop-blur flex items-center justify-center text-white text-xl">
+                    ▶
+                  </span>
+                </span>
+              )}
               <span className="absolute top-2.5 left-2.5 font-mono text-[11px] tracking-wide uppercase text-white bg-black/55 backdrop-blur px-2.5 py-1 rounded-full">
                 {item.category}
               </span>

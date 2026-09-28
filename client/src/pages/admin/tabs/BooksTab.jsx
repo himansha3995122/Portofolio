@@ -7,18 +7,24 @@ import { inputClass, textareaClass, btnPrimaryClass } from "./formStyles";
 export default function BooksTab() {
   const { books, refetch } = useData();
   const [form, setForm] = useState({ title: "", author: "", status: "Want to read", rating: "0", notes: "" });
+  const [cover, setCover] = useState(null);
   const items = [...books].sort((a, b) => a.order - b.order);
 
   async function handleAdd() {
     if (!form.title.trim()) return;
-    await api.addCollectionItem("books", {
-      title: form.title.trim(),
-      author: form.author.trim(),
-      status: form.status,
-      rating: form.rating,
-      notes: form.notes.trim(),
-    });
+    await api.addCollectionItem(
+      "books",
+      {
+        title: form.title.trim(),
+        author: form.author.trim(),
+        status: form.status,
+        rating: form.rating,
+        notes: form.notes.trim(),
+      },
+      cover
+    );
     setForm({ title: "", author: "", status: "Want to read", rating: "0", notes: "" });
+    setCover(null);
     refetch("books");
   }
 
@@ -59,6 +65,15 @@ export default function BooksTab() {
           value={form.notes}
           onChange={(e) => setForm({ ...form, notes: e.target.value })}
         />
+        <label className="text-xs text-dim dark:text-dim-dark">
+          Cover image (optional)
+          <input
+            type="file"
+            accept="image/*"
+            className="block mt-1 text-xs"
+            onChange={(e) => setCover(e.target.files?.[0] || null)}
+          />
+        </label>
         <button className={`${btnPrimaryClass} self-start`} onClick={handleAdd}>
           Add book
         </button>
@@ -70,6 +85,11 @@ export default function BooksTab() {
             key={item.id}
             className="flex items-center gap-2.5 border border-line dark:border-line-dark rounded-xl p-2.5 bg-surface2 dark:bg-surface2-dark"
           >
+            {item.imageUrl && (
+              <div className="w-10 h-10 rounded-lg overflow-hidden bg-bg dark:bg-bg-dark flex-none">
+                <img src={item.imageUrl} alt="" className="w-full h-full object-cover" />
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium truncate">{item.title}</div>
               <div className="text-[11px] font-mono text-dim dark:text-dim-dark truncate">
